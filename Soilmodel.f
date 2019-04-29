@@ -55,9 +55,8 @@
       integer :: icetable                              ! layer of the ice table
       real*8 :: Q_IR, Q_land, Q_sun, Q_scat, Q_tot
       real*8 :: Smean, Smean_flat, Smean_year, Tmean_year         ! Average daily/yearly insolation (W/m²) and temperature (K)
-      real*8 :: Tsurf, Tsurf_flat                                 ! Surface temperature (K)
+      real*8 :: Tsurf, Tsurf_flat, Tavg, Tmax, Tmin                ! Surface temperature (K)
       real*8 :: psy
-      real*8 :: Tmax
       real*8 :: bet, test
       real*8 :: time
       real*8 :: day, hours
@@ -139,9 +138,9 @@
         tn(i) = z(i)-z(i-1)
       enddo
 
-      !      do i=1,nlayer
-      !          write(*,*)i , z(i), tn(i), delta
-      !      enddo
+!            do i=1,nlayer
+!                write(*,*)i , z(i), tn(i), delta
+!            enddo
 
 
       !==============================================================================
@@ -175,6 +174,7 @@
       MCO2_fl = 0.0
 
       open(4,file='Temperature.dat',status ='old')
+
       do k = 35,35
         slope=k*pi/180.
         Tmax=148.
@@ -403,32 +403,46 @@
             pres(i+1)=psurf+rhosoil(i)*gmars*z(i)
           enddo
 
-          if (Tsurf .gt. Tmax) then
-            Tmax=Tsurf
-          end if
-
           if(time .gt. 1849.4845*48*668*99) then                ! 99 ans
             compteur = compteur+1
-            if(mod(compteur,48) .eq. 0.0) then
-              do i=1, nlayer
-               if(
+            if(mod(compteur,1) .eq. 0.0) then
+              do i=1, 1
+!               if(
 !     &           (min(abs(ls-0),abs(ls-360)) .lt. 0.5) .or.
-     &           (abs(ls-30) .lt. 0.5) .or.
+!     &           (abs(ls-30) .lt. 0.5) .or.
 !     &           (abs(ls-60) .lt. 0.5) .or.
-     &           (abs(ls-90) .lt. 0.5) .or.
+!     &           (abs(ls-90) .lt. 0.5) .or.
 !     &           (abs(ls-120) .lt. 0.5) .or.
-     &           (abs(ls-150) .lt. 0.5) .or.
+!     &           (abs(ls-150) .lt. 0.5) .or.
 !     &           (abs(ls-180) .lt. 0.5) .or.
-     &           (abs(ls-210) .lt. 0.5) .or.
+!     &           (abs(ls-210) .lt. 0.5) .or.
 !     &           (abs(ls-240) .lt. 0.5) .or.
-     &           (abs(ls-270) .lt. 0.5) .or.
+!     &           (abs(ls-270) .lt. 0.5) .or.
 !     &           (abs(ls-300) .lt. 0.5) .or.
-     &           (abs(ls-330) .lt. 0.5)
-     &           ) then
+!     &           (abs(ls-330) .lt. 0.5)
+!     &           ) then
 
-                  write(4,*) ls, z(i), temp(i)
+!                  write(4,*) ls, z(i), temp(i)
 
-               endif
+!               endif
+                if ( hours .eq. 0 ) then !Initialization of Tavg, Tmin and Tmax AT MIDNIGHT
+                  Tavg = temp(i)
+                  Tmin = temp(i)
+                  Tmax = temp(i)
+                end if
+
+                Tavg=Tavg+temp(i)/48
+                if (temp(i) .gt. Tmax) then
+                  Tmax=temp(i)
+                end if
+                if (temp(i) .le. Tmin) then
+                  Tmin=temp(i)
+                end if
+
+                if ( hours.eq.24 ) then
+!                  write(4,*) ls, Tavg, Tmax, Tmin
+                end if
+
               end do
             endif
           endif
