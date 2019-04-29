@@ -52,6 +52,7 @@
       real*8 :: dz                                    ! Space step (m)
       real*8 :: provis = 0
       real*8 :: delta                                 ! Skin depth (m)
+      integer :: icetable                              ! layer of the ice table
       real*8 :: Q_IR, Q_land, Q_sun, Q_scat, Q_tot
       real*8 :: Smean, Smean_flat, Smean_year, Tmean_year         ! Average daily/yearly insolation (W/m²) and temperature (K)
       real*8 :: Tsurf, Tsurf_flat                                 ! Surface temperature (K)
@@ -84,20 +85,20 @@
       !==============================================================================
       !     Initialization of cpsoil, rhosoil, ksoil and diffu (values from Sizemore and Mellon, 2006)
       !==============================================================================
-
-      do i=1, nlayer
+      icetable=nlayer
+      do i=1, icetable
         cpsoil(i) = 837.0                ! soil properties for a dry soil
         rhosoil(i) = 1255.0              ! Chevrier : rho*c = 1,05 E+6
         ksoil(i) = 0.085
         diffu(i) = ksoil(i)/(rhosoil(i)*cpsoil(i))
       enddo
 
-!      do i=10, nlayer
-!         cpsoil(i) = .4*(1540.)+.6*(837.)              ! soil properties for an ice-cemented soil (40%)
-!         rhosoil(i) = .4*(927.)+.6*(1255.)
-!         ksoil(i) = .4*(3.2)+.6*(.085)
-!         diffu(i) = ksoil(i)/(rhosoil(i)*cpsoil(i))
-!      enddo
+      do i=icetable+1, nlayer
+         cpsoil(i) = .4*(1540.)+.6*(837.)              ! soil properties for an ice-cemented soil (40%)
+         rhosoil(i) = .4*(927.)+.6*(1255.)
+         ksoil(i) = .4*(3.2)+.6*(.085)
+         diffu(i) = ksoil(i)/(rhosoil(i)*cpsoil(i))
+      enddo
 
       delta = sqrt(diffu(1)*marsday/pi)   ! diurnal skin depth
 
@@ -262,6 +263,14 @@
           Q_sun = Smean*cos_zh*(1.-albedo)
           Q_IR = f_IR*Smean *cos_zh_noon
           Q_scat = 1/2*f_scat*Smean*provis
+
+          do i=1,icetable
+          if (tsoil(i) .gt. 200 .and. tsoil(i) .lt. 250) then
+            ksoil(i)=0.09+7E-4*(tsoil(i)-200)
+          else if ( tsoil(i) .ge. 250 ) then
+            ksoil(i) = 0.14
+          end if
+          end do
 
           do while(flag3)
             do ik = 1, 50
